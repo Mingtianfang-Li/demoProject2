@@ -1,0 +1,43 @@
+name: demoPythonPipeline
+
+stages:
+  - build
+  - test
+  - doc
+  - deploy
+
+jobs:
+  - name: "lint"
+    dockerImage: "python:3.11"
+    script:
+      - "pip install pylint"
+      - "pylint app"
+    allowFailure: false
+    stage: "build"
+
+  - name: "unit-tests"
+    dockerImage: "python:3.11"
+    script:
+      - "pip install -r requirements.txt"
+      - "pytest tests"
+    allowFailure: false
+    stage: "test"
+    dependencies: ["lint"]
+
+  - name: "generate-docs"
+    dockerImage: "python:3.11"
+    script:
+      - "pip install pdoc"
+      - "pdoc app -o docs"
+    allowFailure: false
+    stage: "doc"
+    dependencies: ["lint"]
+
+  - name: "copy-docs"
+    dockerImage: "python:3.11"
+    script:
+      - "mkdir -p /app/deployments"
+      - "cp -r docs /app/deployments/"
+    allowFailure: false
+    stage: "deploy"
+    dependencies: ["generate-docs"]
